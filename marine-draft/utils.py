@@ -7,11 +7,16 @@ import os
 
 def load_ship_image():
     try:
-        # Load image as binary stream
-        image_path = os.path.join("static", "ship_diagram.png")
-        return Image.open(image_path)
-    except Exception:
-        return None
+    # Gunakan path absolut agar tidak tergantung lokasi eksekusi
+    dir_path = os.path.dirname(os.path.abspath(__file__))
+    img_path = os.path.join(dir_path, "static", "ship_diagram.png")
+    
+    if os.path.exists(img_path):
+        c.drawImage(img_path, 50, 400, width=500, height=150)
+    else:
+        c.drawString(50, 400, "[Ship diagram not found]")
+except Exception as e:
+    c.drawString(50, 400, f"[Error loading image: {str(e)}]")
 
 def generate_pdf_report(ship_name, imo_number, surveyor, draft_points, density, summary, date):
     buffer = io.BytesIO()
