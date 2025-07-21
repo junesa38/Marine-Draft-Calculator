@@ -10,10 +10,8 @@ sys.path.append(os.path.dirname(__file__))
 
 def load_ship_image():
     try:
-        # Gunakan path absolut agar tidak tergantung lokasi eksekusi
         dir_path = os.path.dirname(os.path.abspath(__file__))
         img_path = os.path.join(dir_path, "static", "ship_diagram.png")
-        
         if os.path.exists(img_path):
             return Image.open(img_path)
         else:
@@ -21,7 +19,7 @@ def load_ship_image():
     except Exception as e:
         raise RuntimeError(f"Error loading image: {str(e)}")
 
-def generate_pdf_report(ship_name, imo_number, surveyor, draft_points, density, summary, date):
+def generate_pdf_report(ship_name, imo_number, surveyor, draft_points, density, summary, date, chart_image=None):
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     c.setFont("Helvetica", 12)
@@ -38,7 +36,6 @@ def generate_pdf_report(ship_name, imo_number, surveyor, draft_points, density, 
 
     c.drawString(50, 600, f"Mean Draft: {summary['mean_draft']} m")
 
-    # Insert image
     try:
         dir_path = os.path.dirname(os.path.abspath(__file__))
         img_path = os.path.join(dir_path, "static", "ship_diagram.png")
@@ -48,6 +45,14 @@ def generate_pdf_report(ship_name, imo_number, surveyor, draft_points, density, 
             c.drawString(50, 400, "[Ship diagram not found]")
     except Exception as e:
         c.drawString(50, 400, f"[Error loading image: {str(e)}]")
+
+    if chart_image:
+        try:
+            c.drawImage(chart_image, 50, 280, width=500, height=100)
+        except Exception as e:
+            c.drawString(50, 280, f"[Failed to render chart: {str(e)}]")
+    else:
+        c.drawString(50, 280, "[No chart provided]")
 
     c.save()
     buffer.seek(0)
