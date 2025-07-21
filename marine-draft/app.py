@@ -2,7 +2,7 @@ import streamlit as st
 from calculation import calculate_draft_summary
 from utils import generate_pdf_report, load_ship_image
 from datetime import datetime
-from PIL import Image, ImageDraw
+from PIL import ImageDraw
 from io import BytesIO
 
 st.set_page_config(page_title="Marine Draft Calculator", layout="wide")
@@ -18,22 +18,25 @@ with col3:
     surveyor = st.text_input("Surveyor Name")
 
 st.markdown("### Draft Measurements")
-num_points = st.selectbox("Number of Points", [4, 6])
+num_points = st.selectbox("Number of Draft Points", [4, 6])
 
 draft_points = []
 for i in range(num_points):
-    draft = st.text_input(f"Draft Point {i+1} (m)", value="")
+    draft = st.text_input(f"Draft Point {i+1} (m)", value="", key=f"draft_{i}_{num_points}")
     draft_points.append(draft)
 
 st.markdown("### Environmental Data (Optional)")
 density = st.text_input("Water Density (e.g. 1.025)", value="")
 
-# Show diagram
-st.image(load_ship_image(), caption="Ship Draft Reference", use_container_width=True)
+# Show ship diagram
+image = load_ship_image()
+if image:
+    st.image(image, caption="Ship Draft Reference", use_container_width=True)
+else:
+    st.warning("Ship diagram not found or failed to load.")
 
 if st.button("Generate PDF Report"):
     try:
-        # Filter & validate
         draft_values = [float(x) for x in draft_points if x.strip() != ""]
         density_val = float(density) if density.strip() != "" else None
         summary = calculate_draft_summary(draft_values, density_val)
@@ -53,8 +56,7 @@ if st.button("Generate PDF Report"):
     except Exception as e:
         st.error(f"Error generating report: {e}")
 
-
-# --- Tambahan Visualisasi Trim (jika ingin digunakan ke depannya) ---
+# Optional trim visualization
 def draw_trim_visual(fwd, aft):
     width = 600
     height = 200
@@ -64,7 +66,7 @@ def draw_trim_visual(fwd, aft):
     center_y = height // 2
     length = width - 100
 
-    delta = (aft - fwd) * 10  # Skala
+    delta = (aft - fwd) * 10
     bow_y = center_y - delta
     stern_y = center_y + delta
 
