@@ -4,6 +4,7 @@ from io import BytesIO
 from PIL import Image
 import io
 import os
+sys.path.append(os.path.dirname(__file__))
 
 def load_ship_image():
     try:
