@@ -2,7 +2,7 @@ import streamlit as st
 from calculation import calculate_draft_summary
 from utils import generate_pdf_report, load_ship_image
 from datetime import datetime
-from PIL import ImageDraw
+from PIL import Image, ImageDraw
 from io import BytesIO
 
 st.set_page_config(page_title="Marine Draft Calculator", layout="wide")
@@ -35,28 +35,7 @@ if image:
 else:
     st.warning("Ship diagram not found or failed to load.")
 
-if st.button("Generate PDF Report"):
-    try:
-        draft_values = [float(x) for x in draft_points if x.strip() != ""]
-        density_val = float(density) if density.strip() != "" else None
-        summary = calculate_draft_summary(draft_values, density_val)
-
-        pdf_bytes = generate_pdf_report(
-            ship_name=ship_name,
-            imo_number=imo_number,
-            surveyor=surveyor,
-            draft_points=draft_values,
-            density=density_val,
-            summary=summary,
-            date=datetime.today().strftime("%Y-%m-%d")
-        )
-
-        st.download_button("Download PDF Report", data=pdf_bytes,
-                           file_name=f"{ship_name}_draft_report.pdf", mime="application/pdf")
-    except Exception as e:
-        st.error(f"Error generating report: {e}")
-
-# Optional trim visualization
+# Trim Visualization Function
 def draw_trim_visual(fwd, aft):
     width = 600
     height = 200
@@ -82,3 +61,31 @@ def get_trim_image_buffer(fwd, aft):
     img.save(buf, format="PNG")
     buf.seek(0)
     return buf
+
+if st.button("Generate PDF Report"):
+    try:
+        draft_values = [float(x) for x in draft_points if x.strip() != ""]
+        density_val = float(density) if density.strip() != "" else None
+        summary = calculate_draft_summary(draft_values, density_val)
+
+        trim_img_buf = None
+        if len(draft_values) >= 2:
+            fwd = draft_values[0]
+            aft = draft_values[-1]
+            trim_img_buf = get_trim_image_buffer(fwd, aft)
+
+        pdf_bytes = generate_pdf_report(
+            ship_name=ship_name,
+            imo_number=imo_number,
+            surveyor=surveyor,
+            draft_points=draft_values,
+            density=density_val,
+            summary=summary,
+            date=datetime.today().strftime("%Y-%m-%d"),
+            chart_image=trim_img_buf
+        )
+
+        st.download_button("Download PDF Report", data=pdf_bytes,
+                           file_name=f"{ship_name}_draft_report.pdf", mime="application/pdf")
+    except Exception as e:
+        st.error(f"Error generating report: {e}")
